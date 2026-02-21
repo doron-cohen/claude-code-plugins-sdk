@@ -1,0 +1,12 @@
+{
+  "name": "minimal-marketplace",
+  "owner": {
+    "name": "Minimal Author"
+  },
+  "plugins": [
+    {
+      "name": "only-plugin",
+      "source": "./plugins/only-plugin"
+    }
+  ]
+}

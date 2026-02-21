@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "example-db": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/servers/db-server",
+      "args": ["--config", "${CLAUDE_PLUGIN_ROOT}/config.json"],
+      "env": {
+        "DB_PATH": "${CLAUDE_PLUGIN_ROOT}/data"
+      }
+    },
+    "example-api": {
+      "command": "npx",
+      "args": ["-y", "@example/mcp-server"],
+      "cwd": "${CLAUDE_PLUGIN_ROOT}"
+    }
+  }
+}
