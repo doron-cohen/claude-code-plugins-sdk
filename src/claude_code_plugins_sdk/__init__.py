@@ -1,5 +1,6 @@
 from ._plugin import Plugin
-from .errors import LoadError
+from .errors import FetchError, LoadError
+from .fetchers import fetch_marketplace, fetch_marketplace_sync
 from .loaders import load_agent, load_command, load_marketplace, load_plugin, load_skill
 from .models import (
     AgentDefinition,
@@ -10,6 +11,7 @@ from .models import (
     HookEvent,
     HookMatcher,
     HooksConfig,
+    HTTPSource,
     LSPServerConfig,
     LSPServersConfig,
     MarketplaceManifest,
@@ -29,9 +31,11 @@ from .models import (
 
 __all__ = [
     "AgentDefinition",
+    "FetchError",
     "Author",
     "CommandDefinition",
     "GitHubSource",
+    "HTTPSource",
     "HookEntry",
     "HookEvent",
     "HookMatcher",
@@ -53,6 +57,8 @@ __all__ = [
     "RelativePathSource",
     "SkillDefinition",
     "URLSource",
+    "fetch_marketplace",
+    "fetch_marketplace_sync",
     "load_agent",
     "load_command",
     "load_marketplace",

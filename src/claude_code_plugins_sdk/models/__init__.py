@@ -4,6 +4,7 @@ from .hook import HookEntry, HookEvent, HookMatcher, HooksConfig
 from .lsp import LSPServerConfig, LSPServersConfig
 from .marketplace import (
     GitHubSource,
+    HTTPSource,
     MarketplaceManifest,
     MarketplaceMetadata,
     MarketplaceOwner,
@@ -23,6 +24,7 @@ __all__ = [
     "Author",
     "CommandDefinition",
     "GitHubSource",
+    "HTTPSource",
     "HookEntry",
     "HookEvent",
     "HookMatcher",

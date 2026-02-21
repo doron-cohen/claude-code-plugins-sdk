@@ -39,9 +39,17 @@ class PIPSource(BaseModel):
     registry: str | None = None
 
 
+class HTTPSource(BaseModel):
+    """Direct HTTP(S) URL to a marketplace.json file."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    source: Literal["http"]
+    url: str
+
+
 # Discriminated union for typed source objects
 PluginSource = Annotated[
-    GitHubSource | URLSource | NPMSource | PIPSource,
+    GitHubSource | URLSource | NPMSource | PIPSource | HTTPSource,
     Field(discriminator="source"),
 ]
 
