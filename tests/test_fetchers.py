@@ -12,7 +12,7 @@ from claude_code_plugins_sdk import (
     GitHubSource,
     HTTPSource,
     URLSource,
-    fetch_marketplace_sync,
+    fetch_marketplace,
 )
 from claude_code_plugins_sdk.fetchers._dispatcher import _detect
 
@@ -57,7 +57,7 @@ def make_git_marketplace(tmp_path: Path, data: dict) -> Path:
 
 def test_fetch_via_http_success(httpx_mock):
     httpx_mock.add_response(json=VALID_MARKETPLACE)
-    result = fetch_marketplace_sync(
+    result = fetch_marketplace(
         HTTPSource(source="http", url="https://example.com/marketplace.json")
     )
     assert result.name == "test-marketplace"
@@ -68,7 +68,7 @@ def test_fetch_via_http_success(httpx_mock):
 def test_fetch_via_http_404(httpx_mock):
     httpx_mock.add_response(status_code=404)
     with pytest.raises(FetchError):
-        fetch_marketplace_sync(
+        fetch_marketplace(
             HTTPSource(source="http", url="https://example.com/marketplace.json")
         )
 
@@ -76,7 +76,7 @@ def test_fetch_via_http_404(httpx_mock):
 def test_fetch_via_http_500(httpx_mock):
     httpx_mock.add_response(status_code=500)
     with pytest.raises(FetchError):
-        fetch_marketplace_sync(
+        fetch_marketplace(
             HTTPSource(source="http", url="https://example.com/marketplace.json")
         )
 
@@ -84,7 +84,7 @@ def test_fetch_via_http_500(httpx_mock):
 def test_fetch_via_http_invalid_json(httpx_mock):
     httpx_mock.add_response(content=b"not json", status_code=200)
     with pytest.raises(FetchError):
-        fetch_marketplace_sync(
+        fetch_marketplace(
             HTTPSource(source="http", url="https://example.com/marketplace.json")
         )
 
@@ -92,7 +92,7 @@ def test_fetch_via_http_invalid_json(httpx_mock):
 def test_fetch_via_http_invalid_schema(httpx_mock):
     httpx_mock.add_response(json={"plugins": []}, status_code=200)
     with pytest.raises(ValidationError):
-        fetch_marketplace_sync(
+        fetch_marketplace(
             HTTPSource(source="http", url="https://example.com/marketplace.json")
         )
 
@@ -103,14 +103,14 @@ def test_fetch_via_http_invalid_schema(httpx_mock):
 def test_fetch_via_git_local(tmp_path):
     repo = make_git_marketplace(tmp_path, VALID_MARKETPLACE)
     url = f"file://{repo.resolve()}"
-    result = fetch_marketplace_sync(URLSource(source="url", url=url))
+    result = fetch_marketplace(URLSource(source="url", url=url))
     assert result.name == "test-marketplace"
     assert len(result.plugins) == 1
 
 
 def test_fetch_via_git_bad_url():
     with pytest.raises(FetchError):
-        fetch_marketplace_sync(
+        fetch_marketplace(
             URLSource(source="url", url="file:///nonexistent/path/that/does/not/exist")
         )
 
@@ -119,7 +119,7 @@ def test_fetch_via_git_invalid_schema(tmp_path):
     repo = make_git_marketplace(tmp_path, {"plugins": []})
     url = f"file://{repo.resolve()}"
     with pytest.raises(ValidationError):
-        fetch_marketplace_sync(URLSource(source="url", url=url))
+        fetch_marketplace(URLSource(source="url", url=url))
 
 
 # --- Dispatcher / string auto-detection tests ---
@@ -154,6 +154,6 @@ def test_detect_github_with_dash():
 
 @pytest.mark.integration
 def test_fetch_anthropic_official_marketplace():
-    m = fetch_marketplace_sync("anthropics/claude-code")
+    m = fetch_marketplace("anthropics/claude-code")
     assert m.name == "claude-code-plugins"
     assert len(m.plugins) > 5

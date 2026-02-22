@@ -1,6 +1,6 @@
 from ._plugin import Plugin
 from .errors import FetchError, LoadError
-from .fetchers import fetch_marketplace, fetch_marketplace_sync
+from .fetchers import fetch_marketplace
 from .loaders import load_agent, load_command, load_marketplace, load_plugin, load_skill
 from .models import (
     AgentDefinition,
@@ -58,7 +58,6 @@ __all__ = [
     "SkillDefinition",
     "URLSource",
     "fetch_marketplace",
-    "fetch_marketplace_sync",
     "load_agent",
     "load_command",
     "load_marketplace",

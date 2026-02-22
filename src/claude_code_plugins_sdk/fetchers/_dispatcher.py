@@ -45,13 +45,6 @@ def fetch_marketplace(
     raise FetchError(f"Unsupported source type: {type(source)}")
 
 
-def fetch_marketplace_sync(
-    source: str | GitHubSource | URLSource | HTTPSource,
-) -> MarketplaceManifest:
-    """Synchronous alias for fetch_marketplace. All fetches are synchronous."""
-    return fetch_marketplace(source)
-
-
 def _detect(s: str) -> GitHubSource | URLSource | HTTPSource:
     if s.endswith(".git"):
         return URLSource(source="url", url=s)
