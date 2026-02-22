@@ -7,5 +7,7 @@ build/
 .coverage
 htmlcov/
 .mypy_cache/
+.pyrightcache/
+.tycache/
 .ruff_cache/
 .pytest_cache/

@@ -28,6 +28,14 @@ from .models import (
     SkillDefinition,
     URLSource,
 )
+from .validation import (
+    ValidationIssue,
+    ValidationResult,
+    validate_marketplace,
+    validate_marketplace_file,
+    validate_plugin,
+    validate_plugin_file,
+)
 
 __all__ = [
     "AgentDefinition",
@@ -57,10 +65,16 @@ __all__ = [
     "RelativePathSource",
     "SkillDefinition",
     "URLSource",
+    "ValidationIssue",
+    "ValidationResult",
     "fetch_marketplace",
     "load_agent",
     "load_command",
     "load_marketplace",
     "load_plugin",
     "load_skill",
+    "validate_marketplace",
+    "validate_marketplace_file",
+    "validate_plugin",
+    "validate_plugin_file",
 ]
