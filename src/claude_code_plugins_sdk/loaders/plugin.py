@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, TypeVar
 
-import frontmatter  # type: ignore[import-untyped]
+import frontmatter
 
 if TYPE_CHECKING:
     from pathlib import Path
