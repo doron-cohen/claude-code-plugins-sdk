@@ -68,33 +68,25 @@ def test_fetch_via_http_success(httpx_mock):
 def test_fetch_via_http_404(httpx_mock):
     httpx_mock.add_response(status_code=404)
     with pytest.raises(FetchError):
-        fetch_marketplace(
-            HTTPSource(source="http", url="https://example.com/marketplace.json")
-        )
+        fetch_marketplace(HTTPSource(source="http", url="https://example.com/marketplace.json"))
 
 
 def test_fetch_via_http_500(httpx_mock):
     httpx_mock.add_response(status_code=500)
     with pytest.raises(FetchError):
-        fetch_marketplace(
-            HTTPSource(source="http", url="https://example.com/marketplace.json")
-        )
+        fetch_marketplace(HTTPSource(source="http", url="https://example.com/marketplace.json"))
 
 
 def test_fetch_via_http_invalid_json(httpx_mock):
     httpx_mock.add_response(content=b"not json", status_code=200)
     with pytest.raises(FetchError):
-        fetch_marketplace(
-            HTTPSource(source="http", url="https://example.com/marketplace.json")
-        )
+        fetch_marketplace(HTTPSource(source="http", url="https://example.com/marketplace.json"))
 
 
 def test_fetch_via_http_invalid_schema(httpx_mock):
     httpx_mock.add_response(json={"plugins": []}, status_code=200)
     with pytest.raises(ValidationError):
-        fetch_marketplace(
-            HTTPSource(source="http", url="https://example.com/marketplace.json")
-        )
+        fetch_marketplace(HTTPSource(source="http", url="https://example.com/marketplace.json"))
 
 
 # --- Git fetcher tests ---

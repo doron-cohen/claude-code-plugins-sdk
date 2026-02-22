@@ -4,15 +4,17 @@ from typing import Any
 
 from ._result import ValidationIssue, ValidationResult
 
-RESERVED_MARKETPLACE_NAMES = frozenset({
-    "claude-code-marketplace",
-    "claude-code-plugins",
-    "claude-plugins-official",
-    "anthropic-marketplace",
-    "anthropic-plugins",
-    "agent-skills",
-    "life-sciences",
-})
+RESERVED_MARKETPLACE_NAMES = frozenset(
+    {
+        "claude-code-marketplace",
+        "claude-code-plugins",
+        "claude-plugins-official",
+        "anthropic-marketplace",
+        "anthropic-plugins",
+        "agent-skills",
+        "life-sciences",
+    }
+)
 
 
 def validate_marketplace(data: dict[str, Any]) -> ValidationResult:
@@ -20,7 +22,10 @@ def validate_marketplace(data: dict[str, Any]) -> ValidationResult:
 
     if "name" not in data or data["name"] is None:
         issues.append(ValidationIssue("error", "name", "name: Required"))
-    elif isinstance(data.get("name"), str) and data["name"].strip().lower() in RESERVED_MARKETPLACE_NAMES:
+    elif (
+        isinstance(data.get("name"), str)
+        and data["name"].strip().lower() in RESERVED_MARKETPLACE_NAMES
+    ):
         issues.append(
             ValidationIssue("error", "name", f'Marketplace name "{data["name"]}" is reserved')
         )

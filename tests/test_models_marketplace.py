@@ -52,35 +52,34 @@ def test_source_relative_path():
 
 
 def test_source_github():
-    entry = PluginEntry.model_validate({
-        "name": "p",
-        "source": {"source": "github", "repo": "owner/repo", "ref": "v1.0", "sha": "abc123"}
-    })
+    entry = PluginEntry.model_validate(
+        {
+            "name": "p",
+            "source": {"source": "github", "repo": "owner/repo", "ref": "v1.0", "sha": "abc123"},
+        }
+    )
     assert isinstance(entry.source, GitHubSource)
     assert entry.source.repo == "owner/repo"
 
 
 def test_source_url():
-    entry = PluginEntry.model_validate({
-        "name": "p",
-        "source": {"source": "url", "url": "https://gitlab.com/x/y.git"}
-    })
+    entry = PluginEntry.model_validate(
+        {"name": "p", "source": {"source": "url", "url": "https://gitlab.com/x/y.git"}}
+    )
     assert isinstance(entry.source, URLSource)
 
 
 def test_source_npm():
-    entry = PluginEntry.model_validate({
-        "name": "p",
-        "source": {"source": "npm", "package": "@example/plugin", "version": "^1.0"}
-    })
+    entry = PluginEntry.model_validate(
+        {"name": "p", "source": {"source": "npm", "package": "@example/plugin", "version": "^1.0"}}
+    )
     assert isinstance(entry.source, NPMSource)
 
 
 def test_source_pip():
-    entry = PluginEntry.model_validate({
-        "name": "p",
-        "source": {"source": "pip", "package": "my-plugin"}
-    })
+    entry = PluginEntry.model_validate(
+        {"name": "p", "source": {"source": "pip", "package": "my-plugin"}}
+    )
     assert isinstance(entry.source, PIPSource)
 
 
@@ -93,10 +92,12 @@ def test_plugin_entry_defaults():
 
 def test_marketplace_unknown_fields_allowed():
     """Extra fields should not raise an error."""
-    m = MarketplaceManifest.model_validate({
-        "name": "test",
-        "owner": {"name": "Me"},
-        "plugins": [],
-        "unknownField": "value",
-    })
+    m = MarketplaceManifest.model_validate(
+        {
+            "name": "test",
+            "owner": {"name": "Me"},
+            "plugins": [],
+            "unknownField": "value",
+        }
+    )
     assert m.name == "test"

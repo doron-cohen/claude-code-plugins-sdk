@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from ..models.marketplace import MarketplaceManifest
 
 
-def fetch_via_git(
-    url: str, ref: str | None = None, sha: str | None = None
-) -> MarketplaceManifest:
+def fetch_via_git(url: str, ref: str | None = None, sha: str | None = None) -> MarketplaceManifest:
     """Clone a git repo and load its marketplace manifest."""
     with tempfile.TemporaryDirectory() as tmpdir:
         _clone(url, Path(tmpdir), ref=ref)
@@ -39,9 +37,7 @@ def _clone(url: str, dest: Path, ref: str | None) -> None:
     except FileNotFoundError as e:
         raise FetchError("git is not installed or not in PATH", url=url) from e
     if result.returncode != 0:
-        raise FetchError(
-            f"git clone failed for {url}: {result.stderr.strip()}", url=url
-        )
+        raise FetchError(f"git clone failed for {url}: {result.stderr.strip()}", url=url)
 
 
 def _verify_sha(repo_dir: Path, expected_sha: str, url: str) -> None:

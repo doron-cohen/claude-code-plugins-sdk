@@ -8,9 +8,7 @@ from claude_code_plugins_sdk.models.plugin import Author, PluginManifest
 
 
 def test_plugin_manifest_full():
-    data = json.loads(
-        (Path("tests/fixtures/plugin/.claude-plugin/plugin.json")).read_text()
-    )
+    data = json.loads((Path("tests/fixtures/plugin/.claude-plugin/plugin.json")).read_text())
     m = PluginManifest.model_validate(data)
     assert m.name == "example-plugin"
     assert m.version == "1.2.0"
@@ -38,12 +36,14 @@ def test_author_optional_fields():
 
 
 def test_plugin_component_paths():
-    m = PluginManifest.model_validate({
-        "name": "p",
-        "commands": "./custom/cmd.md",
-        "agents": ["./a1.md", "./a2.md"],
-        "mcpServers": "./mcp.json",
-    })
+    m = PluginManifest.model_validate(
+        {
+            "name": "p",
+            "commands": "./custom/cmd.md",
+            "agents": ["./a1.md", "./a2.md"],
+            "mcpServers": "./mcp.json",
+        }
+    )
     assert m.commands == "./custom/cmd.md"
     assert isinstance(m.agents, list)
     assert m.mcp_servers == "./mcp.json"

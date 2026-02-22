@@ -20,4 +20,3 @@ def test_load_error_with_path():
 def test_load_error_is_exception():
     with pytest.raises(LoadError):
         raise LoadError("test")
-

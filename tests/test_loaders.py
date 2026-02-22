@@ -18,6 +18,7 @@ FIXTURE_ROOT = Path("tests/fixtures")
 
 # --- load_marketplace ---
 
+
 def test_load_marketplace_from_directory():
     m = load_marketplace(FIXTURE_ROOT / "marketplace")
     assert m.name == "example-marketplace"
@@ -30,7 +31,9 @@ def test_load_marketplace_from_file():
 
 
 def test_load_marketplace_minimal():
-    m = load_marketplace(FIXTURE_ROOT / "marketplace" / ".claude-plugin" / "minimal-marketplace.json")
+    m = load_marketplace(
+        FIXTURE_ROOT / "marketplace" / ".claude-plugin" / "minimal-marketplace.json"
+    )
     assert m.name == "minimal-marketplace"
 
 
@@ -63,6 +66,7 @@ def test_load_marketplace_invalid_schema(tmp_path):
 
 
 # --- load_plugin ---
+
 
 def test_load_plugin_end_to_end():
     p = load_plugin(FIXTURE_ROOT / "plugin")
@@ -107,6 +111,7 @@ def test_load_plugin_no_manifest(tmp_path):
 
 
 # --- individual loaders ---
+
 
 def test_load_agent():
     a = load_agent(FIXTURE_ROOT / "plugin" / "agents" / "reviewer.md")

@@ -34,9 +34,7 @@ def fetch_marketplace(
         source = _detect(source)
 
     if isinstance(source, GitHubSource):
-        return fetch_via_git(
-            github_url(source.repo), ref=source.ref, sha=source.sha
-        )
+        return fetch_via_git(github_url(source.repo), ref=source.ref, sha=source.sha)
     if isinstance(source, URLSource):
         return fetch_via_git(source.url, ref=source.ref, sha=source.sha)
     if isinstance(source, HTTPSource):
