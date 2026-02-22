@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class LSPServerConfig(BaseModel):
+    """Configuration for a single LSP server (command, args, transport, options)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     command: str
     extension_to_language: dict[str, str] = Field(default_factory=dict, alias="extensionToLanguage")
@@ -21,4 +23,5 @@ class LSPServerConfig(BaseModel):
     max_restarts: int | None = Field(None, alias="maxRestarts")
 
 
+# Name -> LSPServerConfig (e.g. from .lsp.json)
 LSPServersConfig = dict[str, LSPServerConfig]

@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class AgentDefinition(BaseModel):
+    """Agent definition from agents/*.md frontmatter (name, description, tools, body)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str
     description: str

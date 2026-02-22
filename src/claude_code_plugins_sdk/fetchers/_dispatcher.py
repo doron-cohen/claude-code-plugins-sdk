@@ -21,14 +21,18 @@ def fetch_marketplace(
 ) -> MarketplaceManifest:
     """Fetch a marketplace manifest from a remote source.
 
-    Accepts:
-    - GitHubSource — clones from github.com/<repo>
-    - URLSource — clones from the git URL
-    - HTTPSource — HTTP GET to the URL
-    - str — auto-detected:
-        - "owner/repo" → GitHubSource
-        - ends with ".git" → URLSource
-        - otherwise → HTTPSource
+    Args:
+        source: Where to fetch from. If a string, auto-detected:
+            - "owner/repo" → clone from github.com
+            - ends with ".git" → clone from that URL
+            - otherwise → HTTP GET to the URL (marketplace.json).
+            Or pass a GitHubSource, URLSource, or HTTPSource explicitly.
+
+    Returns:
+        Parsed marketplace manifest.
+
+    Raises:
+        FetchError: On network failure, clone failure, or invalid response.
     """
     if isinstance(source, str):
         source = _detect(source)

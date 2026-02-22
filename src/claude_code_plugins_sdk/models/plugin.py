@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Author(BaseModel):
+    """Plugin or marketplace author."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str
     email: str | None = None
@@ -13,6 +15,8 @@ class Author(BaseModel):
 
 
 class PluginManifest(BaseModel):
+    """Contents of .claude-plugin/plugin.json."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str
     version: str | None = None

@@ -17,7 +17,18 @@ if TYPE_CHECKING:
 
 @dataclass
 class Plugin:
-    """A loaded Claude Code plugin directory."""
+    """A loaded Claude Code plugin directory.
+
+    Attributes:
+        root: Path to the plugin directory.
+        manifest: Parsed .claude-plugin/plugin.json, or None if absent.
+        agents: Discovered agent definitions from agents/*.md.
+        commands: Discovered command definitions from commands/*.md.
+        skills: Discovered skill definitions from skills/*/SKILL.md.
+        hooks: Parsed hooks/hooks.json, or None if absent.
+        mcp_servers: Parsed .mcp.json, or None if absent.
+        lsp_servers: Parsed .lsp.json (name -> config), or None if absent.
+    """
 
     root: Path
     manifest: PluginManifest | None = None

@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CommandDefinition(BaseModel):
+    """Command definition from commands/*.md frontmatter (name, description, agent, body)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str | None = None
     description: str | None = None

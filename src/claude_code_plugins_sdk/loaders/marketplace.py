@@ -11,11 +11,17 @@ from ..models.marketplace import MarketplaceManifest
 
 
 def load_marketplace(path: Path) -> MarketplaceManifest:
-    """Load and validate a marketplace manifest.
+    """Load a marketplace manifest from disk.
 
-    Accepts either:
-    - a path directly to a marketplace.json file
-    - a path to a directory containing .claude-plugin/marketplace.json
+    Args:
+        path: Either a path to a marketplace.json file or a directory
+            containing .claude-plugin/marketplace.json.
+
+    Returns:
+        Parsed marketplace manifest.
+
+    Raises:
+        LoadError: If the file is missing or contains invalid JSON.
     """
     resolved = _resolve_marketplace_path(path)
     try:

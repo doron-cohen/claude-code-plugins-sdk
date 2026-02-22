@@ -8,6 +8,8 @@ from .plugin import Author  # noqa: TC001
 
 
 class GitHubSource(BaseModel):
+    """Fetch a marketplace by cloning a GitHub repository."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     source: Literal["github"]
     repo: str  # "owner/repo" format
@@ -16,14 +18,18 @@ class GitHubSource(BaseModel):
 
 
 class URLSource(BaseModel):
+    """Fetch a marketplace by cloning a git URL (must end with .git)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     source: Literal["url"]
-    url: str  # must end with .git
+    url: str
     ref: str | None = None
     sha: str | None = None
 
 
 class NPMSource(BaseModel):
+    """Plugin source via npm package (not yet fully implemented)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     source: Literal["npm"]
     package: str
@@ -32,6 +38,8 @@ class NPMSource(BaseModel):
 
 
 class PIPSource(BaseModel):
+    """Plugin source via pip package (not yet fully implemented)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     source: Literal["pip"]
     package: str
@@ -40,30 +48,34 @@ class PIPSource(BaseModel):
 
 
 class HTTPSource(BaseModel):
-    """Direct HTTP(S) URL to a marketplace.json file."""
+    """Fetch a marketplace manifest via HTTP GET to a URL."""
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     source: Literal["http"]
     url: str
 
 
-# Discriminated union for typed source objects
+# Union of typed plugin source objects (used in PluginEntry.source)
 PluginSource = Annotated[
     GitHubSource | URLSource | NPMSource | PIPSource | HTTPSource,
     Field(discriminator="source"),
 ]
 
-# A relative path string (e.g. "./plugins/my-plugin") is also a valid source
+# Relative path string (e.g. "./plugins/my-plugin") as plugin source
 RelativePathSource = str
 
 
 class MarketplaceOwner(BaseModel):
+    """Owner of a marketplace (from marketplace.json)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str
     email: str | None = None
 
 
 class MarketplaceMetadata(BaseModel):
+    """Optional metadata for a marketplace."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     description: str | None = None
     version: str | None = None
@@ -71,7 +83,7 @@ class MarketplaceMetadata(BaseModel):
 
 
 class PluginEntry(BaseModel):
-    """A plugin listed in a marketplace manifest."""
+    """A single plugin entry in a marketplace manifest (name, source, description, etc.)."""
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str
@@ -96,7 +108,7 @@ class PluginEntry(BaseModel):
 
 
 class MarketplaceManifest(BaseModel):
-    """Root object of .claude-plugin/marketplace.json."""
+    """Root object of .claude-plugin/marketplace.json (name, owner, plugins list)."""
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     schema_url: str | None = Field(None, alias="$schema")

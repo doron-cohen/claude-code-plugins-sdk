@@ -1,3 +1,9 @@
+"""Claude Code plugins and marketplaces SDK.
+
+Load, parse, fetch, and validate plugin manifests, marketplace manifests,
+agents, skills, commands, and related config (hooks, MCP, LSP).
+"""
+
 from ._plugin import Plugin
 from .errors import FetchError, LoadError
 from .fetchers import fetch_marketplace

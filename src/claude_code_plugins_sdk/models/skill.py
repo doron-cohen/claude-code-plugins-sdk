@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class SkillDefinition(BaseModel):
+    """Skill definition from skills/*/SKILL.md frontmatter (name, description, body)."""
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     name: str | None = None
     description: str | None = None

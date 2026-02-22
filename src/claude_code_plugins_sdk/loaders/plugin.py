@@ -26,8 +26,18 @@ _T = TypeVar("_T", bound=BaseModel)
 def load_plugin(path: Path) -> Plugin:
     """Load a plugin from its root directory.
 
-    Discovers all components at their default locations. The plugin manifest
+    Discovers agents (agents/*.md), commands (commands/*.md), skills
+    (skills/*/SKILL.md), and optional hooks, MCP, and LSP config. The manifest
     at .claude-plugin/plugin.json is optional.
+
+    Args:
+        path: Directory containing the plugin (with optional .claude-plugin/, agents/, etc.).
+
+    Returns:
+        Plugin with manifest, agents, commands, skills, hooks, mcp_servers, lsp_servers.
+
+    Raises:
+        LoadError: If path is not a directory or a required file fails to parse.
     """
     if not path.is_dir():
         raise LoadError(f"Plugin path is not a directory: {path}", path=path)
@@ -53,7 +63,11 @@ def load_plugin(path: Path) -> Plugin:
 
 
 def load_agent(path: Path) -> AgentDefinition:
-    """Load a single agent definition from a .md file."""
+    """Load a single agent definition from a Markdown file with YAML frontmatter.
+
+    Raises:
+        LoadError: If the file is missing or frontmatter is invalid.
+    """
     post = _load_frontmatter(path)
     data = dict(post.metadata)
     data["body"] = post.content
@@ -61,7 +75,11 @@ def load_agent(path: Path) -> AgentDefinition:
 
 
 def load_skill(path: Path) -> SkillDefinition:
-    """Load a skill definition from a SKILL.md file."""
+    """Load a skill definition from a SKILL.md file (Markdown with YAML frontmatter).
+
+    Raises:
+        LoadError: If the file is missing or frontmatter is invalid.
+    """
     post = _load_frontmatter(path)
     data = dict(post.metadata)
     data["body"] = post.content
@@ -69,7 +87,11 @@ def load_skill(path: Path) -> SkillDefinition:
 
 
 def load_command(path: Path) -> CommandDefinition:
-    """Load a command definition from a .md file."""
+    """Load a command definition from a Markdown file with YAML frontmatter.
+
+    Raises:
+        LoadError: If the file is missing or frontmatter is invalid.
+    """
     post = _load_frontmatter(path)
     data = dict(post.metadata)
     data["body"] = post.content
