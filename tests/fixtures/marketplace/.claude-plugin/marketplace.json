@@ -1,1 +1,71 @@
-{"$schema":"https://anthropic.com/claude-code/marketplace.schema.json","name":"example-marketplace","version":"1.0.0","owner":{"name":"Test Author","email":"test@example.com"},"metadata":{"description":"Example marketplace for SDK testing","pluginRoot":"./plugins"},"plugins":[{"name":"local-plugin","source":"./plugins/local-plugin","description":"A plugin loaded from a local relative path","version":"1.0.0","author":{"name":"Test Author","email":"test@example.com"},"category":"development"},{"name":"github-plugin","source":{"source":"github","repo":"example-org/example-plugin","ref":"v1.0.0","sha":"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"},"description":"A plugin loaded from GitHub","version":"2.0.0","category":"productivity","tags":["review","automation"]},{"name":"git-url-plugin","source":{"source":"url","url":"https://gitlab.com/example/plugin.git","ref":"main"},"description":"A plugin from a git URL","license":"MIT"},{"name":"npm-plugin","source":{"source":"npm","package":"@example/claude-plugin","version":"^1.0.0"},"description":"A plugin distributed via npm"},{"name":"pip-plugin","source":{"source":"pip","package":"example-claude-plugin","version":">=1.0.0"},"description":"A plugin distributed via pip","strict":false}]}
+{
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    "name": "example-marketplace",
+    "version": "1.0.0",
+    "owner": {
+        "name": "Test Author",
+        "email": "test@example.com"
+    },
+    "metadata": {
+        "description": "Example marketplace for SDK testing",
+        "pluginRoot": "./plugins"
+    },
+    "plugins": [
+        {
+            "name": "local-plugin",
+            "source": "./plugins/local-plugin",
+            "description": "A plugin loaded from a local relative path",
+            "version": "1.0.0",
+            "author": {
+                "name": "Test Author",
+                "email": "test@example.com"
+            },
+            "category": "development"
+        },
+        {
+            "name": "github-plugin",
+            "source": {
+                "source": "github",
+                "repo": "example-org/example-plugin",
+                "ref": "v1.0.0",
+                "sha": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+            },
+            "description": "A plugin loaded from GitHub",
+            "version": "2.0.0",
+            "category": "productivity",
+            "tags": [
+                "review",
+                "automation"
+            ]
+        },
+        {
+            "name": "git-url-plugin",
+            "source": {
+                "source": "url",
+                "url": "https://gitlab.com/example/plugin.git",
+                "ref": "main"
+            },
+            "description": "A plugin from a git URL",
+            "license": "MIT"
+        },
+        {
+            "name": "npm-plugin",
+            "source": {
+                "source": "npm",
+                "package": "@example/claude-plugin",
+                "version": "^1.0.0"
+            },
+            "description": "A plugin distributed via npm"
+        },
+        {
+            "name": "pip-plugin",
+            "source": {
+                "source": "pip",
+                "package": "example-claude-plugin",
+                "version": ">=1.0.0"
+            },
+            "description": "A plugin distributed via pip",
+            "strict": false
+        }
+    ]
+}
