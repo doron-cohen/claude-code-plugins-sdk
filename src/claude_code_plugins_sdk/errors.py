@@ -28,3 +28,48 @@ class FetchError(Exception):
     def __init__(self, message: str, url: str | None = None) -> None:
         self.url = url
         super().__init__(message)
+
+
+class AlreadyInstalledError(Exception):
+    """Raised when installing a plugin that is already in enabledPlugins."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        super().__init__(f"Plugin already installed: {key}")
+
+
+class NotInstalledError(Exception):
+    """Raised when uninstalling/enabling/disabling a plugin that is not installed."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        super().__init__(f"Plugin not installed: {key}")
+
+
+class MarketplaceNotFoundError(Exception):
+    """Raised when a marketplace name is not in known_marketplaces."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        super().__init__(f"Marketplace not found: {name}")
+
+
+class PluginNotFoundError(Exception):
+    """Raised when a plugin name is not in the marketplace manifest."""
+
+    def __init__(self, name: str, marketplace: str) -> None:
+        self.name = name
+        self.marketplace = marketplace
+        super().__init__(f"Plugin {name} not found in marketplace {marketplace}")
+
+
+class PluginBlockedError(Exception):
+    """Raised when installing a plugin that is on the blocklist."""
+
+    def __init__(self, key: str, reason: str | None = None) -> None:
+        self.key = key
+        self.reason = reason
+        msg = f"Plugin is blocked: {key}"
+        if reason:
+            msg += f" ({reason})"
+        super().__init__(msg)

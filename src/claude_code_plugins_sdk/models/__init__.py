@@ -18,6 +18,17 @@ from .marketplace import (
 from .mcp import MCPServerConfig, MCPServersConfig
 from .plugin import Author, PluginManifest
 from .skill import SkillDefinition
+from .state import (
+    AnyMarketplaceSource,
+    BlocklistFile,
+    BlocklistPlugin,
+    DirectoryMarketplaceSource,
+    GitHubMarketplaceSource,
+    GitMarketplaceSource,
+    HostPatternMarketplaceSource,
+    HttpMarketplaceSource,
+    KnownMarketplaceEntry,
+)
 
 __all__ = [
     "AgentDefinition",
@@ -44,4 +55,13 @@ __all__ = [
     "RelativePathSource",
     "SkillDefinition",
     "URLSource",
+    "AnyMarketplaceSource",
+    "BlocklistFile",
+    "BlocklistPlugin",
+    "DirectoryMarketplaceSource",
+    "GitMarketplaceSource",
+    "GitHubMarketplaceSource",
+    "HostPatternMarketplaceSource",
+    "HttpMarketplaceSource",
+    "KnownMarketplaceEntry",
 ]

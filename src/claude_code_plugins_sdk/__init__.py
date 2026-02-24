@@ -5,9 +5,27 @@ agents, skills, commands, and related config (hooks, MCP, LSP).
 """
 
 from ._plugin import Plugin
-from .errors import FetchError, LoadError
+from .errors import (
+    AlreadyInstalledError,
+    FetchError,
+    LoadError,
+    MarketplaceNotFoundError,
+    NotInstalledError,
+    PluginBlockedError,
+    PluginNotFoundError,
+)
 from .fetchers import fetch_marketplace
 from .loaders import load_agent, load_command, load_marketplace, load_plugin, load_skill
+from .manager import (
+    DefaultFetchAdapter,
+    InstalledPlugin,
+    LocalFilesystemMarketplaceAdapter,
+    LocalFilesystemSettingsAdapter,
+    PluginManager,
+    Scope,
+    UpdateCheckResult,
+    make_plugin_manager,
+)
 from .models import (
     AgentDefinition,
     Author,
@@ -45,8 +63,22 @@ from .validation import (
 
 __all__ = [
     "AgentDefinition",
-    "FetchError",
+    "AlreadyInstalledError",
     "Author",
+    "DefaultFetchAdapter",
+    "FetchError",
+    "InstalledPlugin",
+    "LoadError",
+    "LocalFilesystemMarketplaceAdapter",
+    "LocalFilesystemSettingsAdapter",
+    "MarketplaceNotFoundError",
+    "NotInstalledError",
+    "PluginBlockedError",
+    "PluginManager",
+    "PluginNotFoundError",
+    "Scope",
+    "UpdateCheckResult",
+    "make_plugin_manager",
     "CommandDefinition",
     "GitHubSource",
     "HTTPSource",

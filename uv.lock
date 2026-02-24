@@ -35,7 +35,7 @@ wheels = [
 
 [[package]]
 name = "claude-code-plugins-sdk"
-version = "0.0.1.dev6+g5f78ad836.d20260222"
+version = "0.1.2.dev0+gd68e45b65.d20260223"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
