@@ -5,6 +5,7 @@ agents, skills, commands, and related config (hooks, MCP, LSP).
 """
 
 from ._plugin import Plugin
+from .agent import AgentRuntime, SkillMatch, SkillSummary
 from .errors import (
     AlreadyInstalledError,
     FetchError,
@@ -63,6 +64,7 @@ from .validation import (
 
 __all__ = [
     "AgentDefinition",
+    "AgentRuntime",
     "AlreadyInstalledError",
     "Author",
     "DefaultFetchAdapter",
@@ -98,6 +100,8 @@ __all__ = [
     "PIPSource",
     "Plugin",
     "PluginEntry",
+    "SkillMatch",
+    "SkillSummary",
     "PluginManifest",
     "PluginSource",
     "RelativePathSource",
