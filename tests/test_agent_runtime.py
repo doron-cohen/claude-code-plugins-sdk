@@ -164,9 +164,7 @@ def test_from_manager_only_enabled_plugins():
         installLocation=PLUGIN_FIXTURE,
         lastUpdated=datetime.now(timezone.utc),
     )
-    marketplace_adapter = InMemoryMarketplaceAdapter(
-        marketplaces={"test-marketplace": entry}
-    )
+    marketplace_adapter = InMemoryMarketplaceAdapter(marketplaces={"test-marketplace": entry})
     # Plugin installed but disabled
     settings = InMemorySettingsAdapter({"test-plugin@test-marketplace": False})
     manager = PluginManager(

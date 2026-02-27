@@ -14,6 +14,7 @@ from claude_code_plugins_sdk import (
     PluginManager,
     PluginNotFoundError,
 )
+from claude_code_plugins_sdk.errors import FetchError
 from claude_code_plugins_sdk.manager._in_memory import (
     InMemoryMarketplaceAdapter,
     InMemorySettingsAdapter,
@@ -38,15 +39,27 @@ class MockFetchAdapter:
         return _yield_fixture_path()
 
 
+class CountingFetchAdapter:
+    """Tracks fetch calls and yields the fixture marketplace path."""
+
+    def __init__(self):
+        self.call_count = 0
+
+    def fetch(self, source):
+        self.call_count += 1
+        return _yield_fixture_path()
+
+
 def _make_manager(
     marketplaces=None,
     blocklist=None,
     user_plugins=None,
+    fetcher=None,
 ):
     return PluginManager(
         marketplace_state=InMemoryMarketplaceAdapter(marketplaces, blocklist),
         settings={"user": InMemorySettingsAdapter(user_plugins)},
-        fetcher=MockFetchAdapter(),
+        fetcher=fetcher or MockFetchAdapter(),
     )
 
 
@@ -198,3 +211,96 @@ def test_scope_not_configured_raises():
     manager.add_marketplace("owner/repo")
     with pytest.raises(ValueError, match="project"):
         manager.install("local-plugin", "example-marketplace", scope="project")
+
+
+# --- plugin-cache tests ---
+
+
+def test_install_external_source_fetches_plugin_files():
+    """Installing a GitHub-sourced plugin should populate the plugin cache."""
+    fetcher = CountingFetchAdapter()
+    manager = _make_manager(fetcher=fetcher)
+    manager.add_marketplace("owner/repo")  # call 1
+    manager.install("github-plugin", "example-marketplace")  # call 2
+
+    # Fetch was called for the plugin (beyond the marketplace fetch)
+    assert fetcher.call_count == 2
+
+    # Plugin cache dir should exist and be a directory
+    cache_path = manager._state.get_plugin_cache_path("example-marketplace", "github-plugin")
+    assert cache_path.is_dir()
+
+    # It should contain the files copied from FIXTURES
+    assert (cache_path / ".claude-plugin").is_dir()
+
+
+def test_install_relative_source_no_fetch():
+    """Installing a string-source plugin must not trigger an extra fetch."""
+    fetcher = CountingFetchAdapter()
+    manager = _make_manager(fetcher=fetcher)
+    manager.add_marketplace("owner/repo")  # call 1
+    fetcher.call_count = 0  # reset after marketplace fetch
+    manager.install("local-plugin", "example-marketplace")
+
+    # No additional fetch should occur for a relative-path source
+    assert fetcher.call_count == 0
+
+    # Plugin cache should NOT be populated
+    cache_path = manager._state.get_plugin_cache_path("example-marketplace", "local-plugin")
+    assert not cache_path.is_dir()
+
+
+def test_install_npm_source_raises_fetch_error():
+    """Installing a plugin with NPMSource must raise FetchError."""
+    manager = _make_manager()
+    manager.add_marketplace("owner/repo")
+    with pytest.raises(FetchError, match="NPMSource"):
+        manager.install("npm-plugin", "example-marketplace")
+
+
+def test_install_pip_source_raises_fetch_error():
+    """Installing a plugin with PIPSource must raise FetchError."""
+    manager = _make_manager()
+    manager.add_marketplace("owner/repo")
+    with pytest.raises(FetchError, match="PIPSource"):
+        manager.install("pip-plugin", "example-marketplace")
+
+
+def test_uninstall_clears_plugin_cache():
+    """Uninstalling an external plugin should remove its plugin cache."""
+    manager = _make_manager()
+    manager.add_marketplace("owner/repo")
+    manager.install("github-plugin", "example-marketplace")
+
+    cache_path = manager._state.get_plugin_cache_path("example-marketplace", "github-plugin")
+    assert cache_path.is_dir()
+
+    manager.uninstall("github-plugin", "example-marketplace")
+    assert not cache_path.is_dir()
+
+
+def test_uninstall_keeps_cache_when_installed_in_other_scope():
+    """Cache should survive uninstall when plugin remains installed in another scope."""
+    state = InMemoryMarketplaceAdapter()
+    manager = PluginManager(
+        marketplace_state=state,
+        settings={
+            "user": InMemorySettingsAdapter(),
+            "project": InMemorySettingsAdapter(),
+        },
+        fetcher=MockFetchAdapter(),
+    )
+    manager.add_marketplace("owner/repo")
+    manager.install("github-plugin", "example-marketplace", scope="user")
+    manager.install("github-plugin", "example-marketplace", scope="project")
+
+    cache_path = state.get_plugin_cache_path("example-marketplace", "github-plugin")
+    assert cache_path.is_dir()
+
+    # Uninstall from user scope — still installed in project scope
+    manager.uninstall("github-plugin", "example-marketplace", scope="user")
+    assert cache_path.is_dir()
+
+    # Uninstall from project scope — now fully gone
+    manager.uninstall("github-plugin", "example-marketplace", scope="project")
+    assert not cache_path.is_dir()

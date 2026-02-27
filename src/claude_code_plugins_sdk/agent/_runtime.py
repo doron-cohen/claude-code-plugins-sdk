@@ -82,9 +82,7 @@ class AgentRuntime:
                     slug=slug,
                     name=skill_def.get("name"),
                     description=skill_def.get("description"),
-                    disable_model_invocation=bool(
-                        skill_def.get("disable-model-invocation", False)
-                    ),
+                    disable_model_invocation=bool(skill_def.get("disable-model-invocation", False)),
                 )
                 runtime._index.append((summary, skill_md))
 
@@ -112,9 +110,7 @@ class AgentRuntime:
                     slug=slug,
                     name=skill_def.get("name"),
                     description=skill_def.get("description"),
-                    disable_model_invocation=bool(
-                        skill_def.get("disable-model-invocation", False)
-                    ),
+                    disable_model_invocation=bool(skill_def.get("disable-model-invocation", False)),
                 )
                 runtime._index.append((summary, skill_md))
         return runtime
@@ -175,6 +171,14 @@ class AgentRuntime:
 
 def _resolve_plugin_dir(manager: PluginManager, plugin_name: str, marketplace: str) -> Path | None:
     """Find the plugin directory within a marketplace cache."""
+    # Check plugin-specific cache first (for externally-sourced plugins)
+    try:
+        plugin_cache = manager._state.get_plugin_cache_path(marketplace, plugin_name)
+        if plugin_cache.is_dir():
+            return plugin_cache
+    except Exception:
+        pass
+
     try:
         cache_path = manager._state.get_cache_path(marketplace)
     except Exception:

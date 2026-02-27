@@ -39,6 +39,7 @@ class LocalFilesystemMarketplaceAdapter:
         self._marketplaces_file = self._dir / "known_marketplaces.json"
         self._blocklist_file = self._dir / "blocklist.json"
         self._cache_dir = self._dir / "marketplaces"
+        self._plugin_cache_dir = self._dir / "plugin-cache"
 
     def get_marketplaces(self) -> dict[str, KnownMarketplaceEntry]:
         raw = _load_json(self._marketplaces_file, {})
@@ -81,6 +82,22 @@ class LocalFilesystemMarketplaceAdapter:
 
     def delete_cache(self, name: str) -> None:
         dest = self._cache_dir / name
+        if dest.exists() and dest.is_dir():
+            shutil.rmtree(dest)
+
+    def store_plugin_cache(self, marketplace: str, plugin_name: str, source_path: Path) -> Path:
+        dest = self._plugin_cache_dir / marketplace / plugin_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(source_path, dest)
+        return dest
+
+    def get_plugin_cache_path(self, marketplace: str, plugin_name: str) -> Path:
+        return self._plugin_cache_dir / marketplace / plugin_name
+
+    def delete_plugin_cache(self, marketplace: str, plugin_name: str) -> None:
+        dest = self._plugin_cache_dir / marketplace / plugin_name
         if dest.exists() and dest.is_dir():
             shutil.rmtree(dest)
 

@@ -60,3 +60,51 @@ def test_settings_adapter_merge_preserves_other_keys(tmp_path):
 def test_settings_adapter_missing_file_returns_empty(tmp_path):
     adapter = LocalFilesystemSettingsAdapter(tmp_path / "nonexistent.json")
     assert adapter.get_enabled_plugins() == {}
+
+
+# --- plugin cache tests ---
+
+
+def test_store_and_get_plugin_cache(tmp_path):
+    adapter = LocalFilesystemMarketplaceAdapter(tmp_path)
+
+    source = tmp_path / "source-plugin"
+    source.mkdir()
+    (source / "HELLO.txt").write_text("hi")
+
+    result = adapter.store_plugin_cache("my-marketplace", "my-plugin", source)
+    assert result.is_dir()
+    assert (result / "HELLO.txt").read_text() == "hi"
+
+    fetched = adapter.get_plugin_cache_path("my-marketplace", "my-plugin")
+    assert fetched == result
+    assert (fetched / "HELLO.txt").read_text() == "hi"
+
+
+def test_delete_plugin_cache(tmp_path):
+    adapter = LocalFilesystemMarketplaceAdapter(tmp_path)
+
+    source = tmp_path / "source-plugin"
+    source.mkdir()
+    (source / "file.txt").write_text("data")
+
+    adapter.store_plugin_cache("mkt", "plugin", source)
+    cache_path = adapter.get_plugin_cache_path("mkt", "plugin")
+    assert cache_path.is_dir()
+
+    adapter.delete_plugin_cache("mkt", "plugin")
+    assert not cache_path.exists()
+
+
+def test_delete_plugin_cache_noop_if_missing(tmp_path):
+    adapter = LocalFilesystemMarketplaceAdapter(tmp_path)
+    # Should not raise even if nothing was ever stored
+    adapter.delete_plugin_cache("mkt", "no-such-plugin")
+
+
+def test_get_plugin_cache_path_not_yet_fetched(tmp_path):
+    adapter = LocalFilesystemMarketplaceAdapter(tmp_path)
+    path = adapter.get_plugin_cache_path("mkt", "plugin")
+    # Returns a path — no exception — but it doesn't exist yet
+    assert not path.exists()
+    assert path.name == "plugin"

@@ -173,6 +173,9 @@ class PluginManager:
         marketplace: str,
         scope: Scope = "user",
     ) -> None:
+        from ..errors import FetchError
+        from ..models.marketplace import NPMSource, PIPSource
+
         key = _plugin_key(plugin_name, marketplace)
         if self.is_blocked(plugin_name, marketplace):
             raise PluginBlockedError(key)
@@ -180,12 +183,22 @@ class PluginManager:
         if marketplace not in all_marketplaces:
             raise MarketplaceNotFoundError(marketplace)
         manifest = self.get_marketplace_manifest(marketplace)
-        if not any(p.name == plugin_name for p in manifest.plugins):
+        entry = next((p for p in manifest.plugins if p.name == plugin_name), None)
+        if entry is None:
             raise PluginNotFoundError(plugin_name, marketplace)
         adapter = self._settings_for(scope)
         plugins = adapter.get_enabled_plugins()
         if key in plugins:
             raise AlreadyInstalledError(key)
+
+        source = entry.source
+        if not isinstance(source, str):
+            # External source — fetch and cache plugin files first
+            if isinstance(source, (NPMSource, PIPSource)):
+                raise FetchError(f"{type(source).__name__} sources are not yet supported")
+            with self._fetcher.fetch(source) as plugin_path:
+                self._state.store_plugin_cache(marketplace, plugin_name, plugin_path)
+
         plugins[key] = True
         adapter.set_enabled_plugins(plugins)
 
@@ -202,6 +215,8 @@ class PluginManager:
             raise NotInstalledError(key)
         del plugins[key]
         adapter.set_enabled_plugins(plugins)
+        if not self.is_installed(plugin_name, marketplace):
+            self._state.delete_plugin_cache(marketplace, plugin_name)
 
     def enable(
         self,

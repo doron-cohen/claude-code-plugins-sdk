@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shutil
+import tempfile
 from pathlib import Path
 
 from ..models.state import BlocklistFile, KnownMarketplaceEntry
@@ -22,6 +24,8 @@ class InMemoryMarketplaceAdapter:
         self._marketplaces = dict(marketplaces or {})
         self._blocklist = blocklist if blocklist is not None else _default_blocklist()
         self._cache: dict[str, dict] = {}
+        self._plugin_cache: dict[tuple[str, str], Path] = {}
+        self._plugin_cache_tmpdirs: list[tempfile.TemporaryDirectory] = []
 
     def get_marketplaces(self) -> dict[str, KnownMarketplaceEntry]:
         return dict(self._marketplaces)
@@ -44,6 +48,24 @@ class InMemoryMarketplaceAdapter:
 
     def delete_cache(self, name: str) -> None:
         self._cache.pop(name, None)
+
+    def store_plugin_cache(self, marketplace: str, plugin_name: str, source_path: Path) -> Path:
+        tmpdir = tempfile.TemporaryDirectory()
+        self._plugin_cache_tmpdirs.append(tmpdir)
+        dest = Path(tmpdir.name) / plugin_name
+        shutil.copytree(source_path, dest)
+        self._plugin_cache[(marketplace, plugin_name)] = dest
+        return dest
+
+    def get_plugin_cache_path(self, marketplace: str, plugin_name: str) -> Path:
+        if (marketplace, plugin_name) in self._plugin_cache:
+            return self._plugin_cache[(marketplace, plugin_name)]
+        return Path(f"/in-memory/plugin-cache/{marketplace}/{plugin_name}")
+
+    def delete_plugin_cache(self, marketplace: str, plugin_name: str) -> None:
+        path = self._plugin_cache.pop((marketplace, plugin_name), None)
+        if path is not None and path.is_dir():
+            shutil.rmtree(path)
 
 
 class InMemorySettingsAdapter:
