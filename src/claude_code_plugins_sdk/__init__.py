@@ -5,7 +5,15 @@ agents, skills, commands, and related config (hooks, MCP, LSP).
 """
 
 from ._plugin import Plugin
-from .agent import AgentRuntime, SkillMatch, SkillSummary
+from .agent import (
+    AgentMatch,
+    AgentRuntime,
+    AgentSummary,
+    CommandMatch,
+    CommandSummary,
+    SkillMatch,
+    SkillSummary,
+)
 from .errors import (
     AlreadyInstalledError,
     FetchError,
@@ -64,7 +72,9 @@ from .validation import (
 
 __all__ = [
     "AgentDefinition",
+    "AgentMatch",
     "AgentRuntime",
+    "AgentSummary",
     "AlreadyInstalledError",
     "Author",
     "DefaultFetchAdapter",
@@ -82,6 +92,8 @@ __all__ = [
     "UpdateCheckResult",
     "make_plugin_manager",
     "CommandDefinition",
+    "CommandMatch",
+    "CommandSummary",
     "GitHubSource",
     "HTTPSource",
     "HookEntry",

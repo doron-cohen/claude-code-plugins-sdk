@@ -34,6 +34,53 @@ class SkillMatch:
     score: float  # 0.0–1.0
 
 
+@dataclass(frozen=True)
+class CommandSummary:
+    """Lightweight command metadata — no body loaded."""
+
+    plugin: str
+    slug: str  # file stem, e.g. "review"
+    name: str | None
+    description: str | None
+    argument_hint: str | None = None
+    allowed_tools: list[str] = field(default_factory=list)
+
+    @property
+    def id(self) -> str:
+        return f"{self.plugin}:{self.slug}"
+
+
+@dataclass(frozen=True)
+class CommandMatch:
+    """A command with a relevance score from a search."""
+
+    command: CommandSummary
+    score: float  # 0.0–1.0
+
+
+@dataclass(frozen=True)
+class AgentSummary:
+    """Lightweight agent metadata — no body loaded."""
+
+    plugin: str
+    slug: str  # file stem, e.g. "reviewer"
+    name: str | None
+    description: str | None
+    tools: list[str] = field(default_factory=list)
+
+    @property
+    def id(self) -> str:
+        return f"{self.plugin}:{self.slug}"
+
+
+@dataclass(frozen=True)
+class AgentMatch:
+    """An agent with a relevance score from a search."""
+
+    agent: AgentSummary
+    score: float  # 0.0–1.0
+
+
 @dataclass
 class AgentRuntime:
     """Read-only view of skills from installed, enabled plugins.
@@ -47,6 +94,8 @@ class AgentRuntime:
     """
 
     _index: list[tuple[SkillSummary, Path]] = field(default_factory=list, repr=False)
+    _cmd_index: list[tuple[CommandSummary, Path]] = field(default_factory=list, repr=False)
+    _agent_index: list[tuple[AgentSummary, Path]] = field(default_factory=list, repr=False)
 
     # --- factory ---
 
@@ -68,23 +117,25 @@ class AgentRuntime:
                 continue
 
             skills_dir = plugin_dir / "skills"
-            if not skills_dir.is_dir():
-                continue
+            if skills_dir.is_dir():
+                for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+                    slug = skill_md.parent.name
+                    try:
+                        skill_def = _load_skill_meta(skill_md)
+                    except Exception:
+                        continue
+                    summary = SkillSummary(
+                        plugin=installed.name,
+                        slug=slug,
+                        name=skill_def.get("name"),
+                        description=skill_def.get("description"),
+                        disable_model_invocation=bool(
+                            skill_def.get("disable-model-invocation", False)
+                        ),
+                    )
+                    runtime._index.append((summary, skill_md))
 
-            for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
-                slug = skill_md.parent.name
-                try:
-                    skill_def = _load_skill_meta(skill_md)
-                except Exception:
-                    continue
-                summary = SkillSummary(
-                    plugin=installed.name,
-                    slug=slug,
-                    name=skill_def.get("name"),
-                    description=skill_def.get("description"),
-                    disable_model_invocation=bool(skill_def.get("disable-model-invocation", False)),
-                )
-                runtime._index.append((summary, skill_md))
+            _index_commands_and_agents(runtime, installed.name, plugin_dir)
 
         return runtime
 
@@ -97,22 +148,26 @@ class AgentRuntime:
         runtime = cls()
         for plugin_name, plugin_dir in plugins:
             skills_dir = plugin_dir / "skills"
-            if not skills_dir.is_dir():
-                continue
-            for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
-                slug = skill_md.parent.name
-                try:
-                    skill_def = _load_skill_meta(skill_md)
-                except Exception:
-                    continue
-                summary = SkillSummary(
-                    plugin=plugin_name,
-                    slug=slug,
-                    name=skill_def.get("name"),
-                    description=skill_def.get("description"),
-                    disable_model_invocation=bool(skill_def.get("disable-model-invocation", False)),
-                )
-                runtime._index.append((summary, skill_md))
+            if skills_dir.is_dir():
+                for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+                    slug = skill_md.parent.name
+                    try:
+                        skill_def = _load_skill_meta(skill_md)
+                    except Exception:
+                        continue
+                    summary = SkillSummary(
+                        plugin=plugin_name,
+                        slug=slug,
+                        name=skill_def.get("name"),
+                        description=skill_def.get("description"),
+                        disable_model_invocation=bool(
+                            skill_def.get("disable-model-invocation", False)
+                        ),
+                    )
+                    runtime._index.append((summary, skill_md))
+
+            _index_commands_and_agents(runtime, plugin_name, plugin_dir)
+
         return runtime
 
     # --- public API ---
@@ -165,8 +220,138 @@ class AgentRuntime:
         results.sort(key=lambda m: (-m.score, m.skill.id))
         return results[:limit]
 
+    def list_commands(self) -> list[CommandSummary]:
+        """Return metadata for all available commands. No body loaded."""
+        return [s for s, _ in self._cmd_index]
+
+    def get_command(self, plugin: str, slug: str) -> str:
+        """Return the full body for a command.
+
+        Args:
+            plugin: Plugin name (as in CommandSummary.plugin).
+            slug: Command file stem (as in CommandSummary.slug).
+
+        Returns:
+            Full markdown content of the command file.
+
+        Raises:
+            KeyError: If no matching command is found.
+        """
+        for s, path in self._cmd_index:
+            if s.plugin == plugin and s.slug == slug:
+                return path.read_text(encoding="utf-8")
+        raise KeyError(f"Command not found: {plugin}:{slug}")
+
+    def search_commands(self, query: str, limit: int = 10) -> list[CommandMatch]:
+        """Search commands by name and description using in-memory token matching.
+
+        Args:
+            query: Free-text search query.
+            limit: Maximum number of results to return.
+
+        Returns:
+            List of CommandMatch sorted by relevance (highest first).
+        """
+        tokens = _tokenize(query)
+        if not tokens:
+            return [CommandMatch(command=s, score=1.0) for s, _ in self._cmd_index[:limit]]
+        results = []
+        for s, _ in self._cmd_index:
+            sc = _score_fields(s.name, s.description, s.slug, s.plugin, tokens)
+            if sc > 0:
+                results.append(CommandMatch(command=s, score=sc))
+        results.sort(key=lambda m: (-m.score, m.command.id))
+        return results[:limit]
+
+    def list_agents(self) -> list[AgentSummary]:
+        """Return metadata for all available agents. No body loaded."""
+        return [s for s, _ in self._agent_index]
+
+    def get_agent(self, plugin: str, slug: str) -> str:
+        """Return the full body for an agent.
+
+        Args:
+            plugin: Plugin name (as in AgentSummary.plugin).
+            slug: Agent file stem (as in AgentSummary.slug).
+
+        Returns:
+            Full markdown content of the agent file.
+
+        Raises:
+            KeyError: If no matching agent is found.
+        """
+        for s, path in self._agent_index:
+            if s.plugin == plugin and s.slug == slug:
+                return path.read_text(encoding="utf-8")
+        raise KeyError(f"Agent not found: {plugin}:{slug}")
+
+    def search_agents(self, query: str, limit: int = 10) -> list[AgentMatch]:
+        """Search agents by name and description using in-memory token matching.
+
+        Args:
+            query: Free-text search query.
+            limit: Maximum number of results to return.
+
+        Returns:
+            List of AgentMatch sorted by relevance (highest first).
+        """
+        tokens = _tokenize(query)
+        if not tokens:
+            return [AgentMatch(agent=s, score=1.0) for s, _ in self._agent_index[:limit]]
+        results = []
+        for s, _ in self._agent_index:
+            sc = _score_fields(s.name, s.description, s.slug, s.plugin, tokens)
+            if sc > 0:
+                results.append(AgentMatch(agent=s, score=sc))
+        results.sort(key=lambda m: (-m.score, m.agent.id))
+        return results[:limit]
+
 
 # --- internal helpers ---
+
+
+def _index_commands_and_agents(runtime: AgentRuntime, plugin_name: str, plugin_dir: Path) -> None:
+    """Index commands and agents from a plugin directory into the runtime."""
+    commands_dir = plugin_dir / "commands"
+    if commands_dir.is_dir():
+        for cmd_md in sorted(commands_dir.glob("*.md")):
+            slug = cmd_md.stem
+            try:
+                meta = _load_skill_meta(cmd_md)
+            except Exception:
+                continue
+            tools = meta.get("allowed-tools") or []
+            if isinstance(tools, str):
+                tools = [t.strip() for t in tools.split(",") if t.strip()]
+            summary = CommandSummary(
+                plugin=plugin_name,
+                slug=slug,
+                name=meta.get("name"),
+                description=meta.get("description"),
+                argument_hint=meta.get("argument-hint"),
+                allowed_tools=tools,
+            )
+            runtime._cmd_index.append((summary, cmd_md))
+
+    agents_dir = plugin_dir / "agents"
+    if agents_dir.is_dir():
+        for agent_md in sorted(agents_dir.glob("*.md")):
+            slug = agent_md.stem
+            try:
+                meta = _load_skill_meta(agent_md)
+            except Exception:
+                continue
+            tools_raw = meta.get("tools") or []
+            if isinstance(tools_raw, str):
+                tools_raw = [t.strip() for t in tools_raw.split(",") if t.strip()]
+            summary = AgentSummary(
+                plugin=plugin_name,
+                slug=slug,
+                name=meta.get("name"),
+                description=meta.get("description"),
+                tools=tools_raw,
+            )
+            runtime._agent_index.append((summary, agent_md))
 
 
 def _resolve_plugin_dir(manager: PluginManager, plugin_name: str, marketplace: str) -> Path | None:
@@ -212,18 +397,22 @@ def _tokenize(text: str) -> list[str]:
     return _TOKEN_RE.findall(text.lower())
 
 
-def _score(summary: SkillSummary, query_tokens: list[str]) -> float:
-    """Score a skill against query tokens. Returns 0.0–1.0."""
-    haystack = " ".join(
-        filter(None, [summary.name, summary.description, summary.slug, summary.plugin])
-    )
+def _score_fields(
+    name: str | None,
+    description: str | None,
+    slug: str,
+    plugin: str,
+    query_tokens: list[str],
+) -> float:
+    """Score fields against query tokens. Returns 0.0–1.0."""
+    haystack = " ".join(filter(None, [name, description, slug, plugin]))
     hay_tokens = set(_tokenize(haystack))
     if not hay_tokens:
         return 0.0
 
     # Name/slug matches are weighted higher than description matches
-    name_tokens = set(_tokenize(" ".join(filter(None, [summary.name, summary.slug]))))
-    desc_tokens = set(_tokenize(summary.description or ""))
+    name_tokens = set(_tokenize(" ".join(filter(None, [name, slug]))))
+    desc_tokens = set(_tokenize(description or ""))
 
     hits = 0.0
     for t in query_tokens:
@@ -232,5 +421,11 @@ def _score(summary: SkillSummary, query_tokens: list[str]) -> float:
         elif t in desc_tokens:
             hits += 1.0
 
-    max_score = len(query_tokens) * 2.0
-    return min(hits / max_score, 1.0)
+    return min(hits / (len(query_tokens) * 2.0), 1.0)
+
+
+def _score(summary: SkillSummary, query_tokens: list[str]) -> float:
+    """Thin wrapper kept for backward compatibility."""
+    return _score_fields(
+        summary.name, summary.description, summary.slug, summary.plugin, query_tokens
+    )

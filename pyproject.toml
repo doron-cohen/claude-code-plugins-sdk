@@ -47,6 +47,7 @@ dev-dependencies = [
     "pytest-cov>=5.0",
     "ruff>=0.6",
     "pytest-httpx>=0.36.0",
+    "ty>=0.0.19",
 ]
 
 [tool.ruff]

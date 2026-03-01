@@ -4,7 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from claude_code_plugins_sdk.agent import AgentRuntime, SkillMatch, SkillSummary
+from claude_code_plugins_sdk.agent import (
+    AgentMatch,
+    AgentRuntime,
+    AgentSummary,
+    CommandMatch,
+    CommandSummary,
+    SkillMatch,
+    SkillSummary,
+)
 
 PLUGIN_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "plugin"
 
@@ -174,3 +182,139 @@ def test_from_manager_only_enabled_plugins():
     )
     runtime = AgentRuntime.from_manager(manager)
     assert runtime.list_skills() == []
+
+
+# --- list_commands ---
+
+
+def test_list_commands_returns_summaries():
+    commands = _runtime().list_commands()
+    assert len(commands) == 1
+    cmd = commands[0]
+    assert isinstance(cmd, CommandSummary)
+    assert cmd.plugin == "test-plugin"
+    assert cmd.slug == "review"
+    assert cmd.name == "example-plugin:review"
+    assert cmd.description == "Run a code review on the current changes"
+    assert cmd.argument_hint == "[--strict]"
+    assert cmd.allowed_tools == ["Read", "Grep", "Glob", "Bash"]
+
+
+# --- list_agents ---
+
+
+def test_list_agents_returns_summaries():
+    agents = _runtime().list_agents()
+    assert len(agents) == 2
+    slugs = {a.slug for a in agents}
+    assert slugs == {"minimal", "reviewer"}
+    for agent in agents:
+        assert isinstance(agent, AgentSummary)
+        assert agent.plugin == "test-plugin"
+
+    reviewer = next(a for a in agents if a.slug == "reviewer")
+    assert reviewer.tools == ["Read", "Grep", "Glob", "WebSearch"]
+
+    minimal = next(a for a in agents if a.slug == "minimal")
+    assert minimal.tools == ["Read"]
+
+
+# --- get_command ---
+
+
+def test_get_command_returns_full_body():
+    body = _runtime().get_command("test-plugin", "review")
+    assert "---" in body
+    assert "Run a comprehensive code review" in body
+
+
+def test_get_command_missing_raises_key_error():
+    with pytest.raises(KeyError, match="test-plugin:no-such"):
+        _runtime().get_command("test-plugin", "no-such")
+
+
+# --- get_agent ---
+
+
+def test_get_agent_returns_full_body():
+    body = _runtime().get_agent("test-plugin", "reviewer")
+    assert "---" in body
+    assert "code reviewer" in body
+
+
+def test_get_agent_missing_raises_key_error():
+    with pytest.raises(KeyError, match="test-plugin:no-such"):
+        _runtime().get_agent("test-plugin", "no-such")
+
+
+# --- search_commands ---
+
+
+def test_search_commands_scores_by_name():
+    results = _runtime().search_commands("review")
+    assert len(results) >= 1
+    assert isinstance(results[0], CommandMatch)
+    assert results[0].command.slug == "review"
+    assert results[0].score > 0
+
+
+def test_search_commands_empty_query_returns_all():
+    results = _runtime().search_commands("")
+    assert len(results) == 1
+
+
+# --- search_agents ---
+
+
+def test_search_agents_scores_by_name():
+    results = _runtime().search_agents("reviewer")
+    assert len(results) >= 1
+    assert isinstance(results[0], AgentMatch)
+    assert results[0].agent.slug == "reviewer"
+    assert results[0].score > 0
+
+
+def test_search_agents_empty_query_returns_all():
+    results = _runtime().search_agents("")
+    assert len(results) == 2
+
+
+# --- from_manager loads commands and agents ---
+
+
+def test_from_manager_loads_commands_and_agents():
+    from contextlib import contextmanager
+    from datetime import datetime, timezone
+
+    from claude_code_plugins_sdk import PluginManager
+    from claude_code_plugins_sdk.manager._in_memory import (
+        InMemoryMarketplaceAdapter,
+        InMemorySettingsAdapter,
+    )
+    from claude_code_plugins_sdk.models.state import GitHubMarketplaceSource, KnownMarketplaceEntry
+
+    @contextmanager
+    def _noop_fetch(source):
+        yield PLUGIN_FIXTURE
+
+    class _MockFetch:
+        def fetch(self, source):
+            return _noop_fetch(source)
+
+    entry = KnownMarketplaceEntry(
+        source=GitHubMarketplaceSource(source="github", repo="owner/repo"),
+        installLocation=PLUGIN_FIXTURE,
+        lastUpdated=datetime.now(timezone.utc),
+    )
+    marketplace_adapter = InMemoryMarketplaceAdapter(marketplaces={"test-marketplace": entry})
+    # Wire up the plugin cache so _resolve_plugin_dir can find the fixture
+    marketplace_adapter._plugin_cache[("test-marketplace", "test-plugin")] = PLUGIN_FIXTURE
+    settings = InMemorySettingsAdapter({"test-plugin@test-marketplace": True})
+    manager = PluginManager(
+        marketplace_state=marketplace_adapter,
+        settings={"user": settings},
+        fetcher=_MockFetch(),
+    )
+    runtime = AgentRuntime.from_manager(manager)
+    assert len(runtime.list_commands()) >= 1
+    assert len(runtime.list_agents()) >= 1

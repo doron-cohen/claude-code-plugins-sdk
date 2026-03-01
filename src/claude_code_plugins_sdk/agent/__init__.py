@@ -1,5 +1,21 @@
 """Agent runtime API — discover and load skills from installed plugins."""
 
-from ._runtime import AgentRuntime, SkillMatch, SkillSummary
+from ._runtime import (
+    AgentMatch,
+    AgentRuntime,
+    AgentSummary,
+    CommandMatch,
+    CommandSummary,
+    SkillMatch,
+    SkillSummary,
+)
 
-__all__ = ["AgentRuntime", "SkillMatch", "SkillSummary"]
+__all__ = [
+    "AgentMatch",
+    "AgentRuntime",
+    "AgentSummary",
+    "CommandMatch",
+    "CommandSummary",
+    "SkillMatch",
+    "SkillSummary",
+]
